@@ -7,6 +7,8 @@ namespace LethalCasinoTweaks.Patches;
 [HarmonyPatch(typeof(Blackjack))]
 public class BlackjackPatch
 {
+    /// Start CreateDeck Patches
+
     /**
      * `CreateDeck` is what actually restores the playing deck
      * to its initial state. We hook into it and only allow
@@ -26,6 +28,10 @@ public class BlackjackPatch
         return true;
     }
     
+    /// End CreateDeck Patches
+    
+    /// Start DealCard Patches
+    
     /**
      * Because we lazily re-create the deck, we need to make sure
      * that it is in a good state any time the underlying class
@@ -34,17 +40,44 @@ public class BlackjackPatch
      */
     [HarmonyPatch("DealCard")]
     [HarmonyPrefix]
-    private static bool DealCardPrefix(Blackjack __instance)
+    private static void DealCardPrefix(Blackjack __instance)
     {
         if (ShouldCreateDeck(__instance))
         {
             LethalCasinoTweaks.Logger.LogDebug("Reshuffling empty deck before dealing");
             __instance.CreateDeck();
         }
+    }
+    
+    /// End DealCard Patches
+    
+    /// Start StartGameClientRpc Patches
 
-        return true;
+    /**
+     * Mutes the audio source before calling the method, preventing it
+     * from playing the shuffle sound.
+     */
+    [HarmonyPatch("StartGameClientRpc")]
+    [HarmonyPrefix]
+    private static void StartGameClientRpcPrefix(Blackjack __instance)
+    {
+        __instance.audioSource.mute = true;
     }
 
+    /**
+     * Unmute the audio source after the call regardless of what happens. 
+     */
+    [HarmonyPatch("StartGameClientRpc")]
+    [HarmonyFinalizer]
+    private static void StartGameClientRpcPostfix(Blackjack __instance)
+    {
+        __instance.audioSource.mute = false;
+    }
+    
+    /// End StartGameClientRpc Patches
+
+    /// Utilities
+    
     /**
      * If the deck hasn't yet been constructed or if it is empty
      * we will allow it to be recreated, else skip.
