@@ -24,11 +24,28 @@ public class BlackjackPatch
             return false;
         }
 
-        LethalCasinoTweaks.Logger.LogDebug("Creating deck");
+        LethalCasinoTweaks.Logger.LogDebug("Creating/shuffling deck");
         return true;
     }
     
     /// End CreateDeck Patches
+    
+    /// Start ShuffleDeck Patches
+
+    /**
+     * `CreateDeck` is what actually restores the playing deck
+     * to its initial state. We hook into it and only allow
+     * the call to go through if we deem it necessary.
+     */
+    [HarmonyPatch("ShuffleDeck")]
+    [HarmonyPostfix]
+    private static void ShuffleDeckPostfix(Blackjack __instance)
+    {
+        LethalCasinoTweaks.Logger.LogDebug("Playing shuffle sound for all clients");
+        __instance.PlaySoundClientRpc("ShuffleDeck", 1f);
+    }
+    
+    /// End ShuffleDeck Patches
     
     /// Start DealCard Patches
     
@@ -61,6 +78,7 @@ public class BlackjackPatch
     [HarmonyPrefix]
     private static void StartGameClientRpcPrefix(Blackjack __instance)
     {
+        LethalCasinoTweaks.Logger.LogDebug("Muting audio source to prevent initial shuffle sound on game start");
         __instance.audioSource.mute = true;
     }
 
@@ -69,15 +87,16 @@ public class BlackjackPatch
      */
     [HarmonyPatch("StartGameClientRpc")]
     [HarmonyFinalizer]
-    private static void StartGameClientRpcPostfix(Blackjack __instance)
+    private static void StartGameClientRpcFinalizer(Blackjack __instance)
     {
+        LethalCasinoTweaks.Logger.LogDebug("Un-muting audio source after after game start");
         __instance.audioSource.mute = false;
     }
     
     /// End StartGameClientRpc Patches
 
     /// Utilities
-    
+
     /**
      * If the deck hasn't yet been constructed or if it is empty
      * we will allow it to be recreated, else skip.
