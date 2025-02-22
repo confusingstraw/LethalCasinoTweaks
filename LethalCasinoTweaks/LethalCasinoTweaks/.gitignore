@@ -11,6 +11,10 @@ nupkg/
 # Rider
 .idea
 
+.zip
+
+archive/
+
 # User-specific files
 *.suo
 *.user
