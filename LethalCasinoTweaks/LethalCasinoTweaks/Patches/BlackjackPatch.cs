@@ -1,11 +1,34 @@
 using HarmonyLib;
 using LethalCasino.Custom;
+using UnityEngine;
+using UnityEngine.UIElements.Collections;
 
 namespace LethalCasinoTweaks.Patches;
 
 [HarmonyPatch(typeof(Blackjack))]
 public class BlackjackPatch
 {
+    public static readonly int FullDeckSize = 52;
+    public static readonly float FDeckCardYOffset = .001f;
+    public static float FInitialDeckLocalYPos = .9462f;
+    public static float FEmptyDeckLocalYPos = FInitialDeckLocalYPos - (FDeckCardYOffset * FullDeckSize);
+
+    [HarmonyPatch("Start")]
+    [HarmonyPostfix]
+    private static void StartPostfix(Blackjack __instance)
+    {
+        var cardDeck = GetCardDeckTransform(__instance);
+        if (cardDeck != null)
+        {
+            FInitialDeckLocalYPos = cardDeck.transform.localPosition.y;
+            FEmptyDeckLocalYPos = FInitialDeckLocalYPos - (FDeckCardYOffset * FullDeckSize);
+        }
+        else
+        {
+            LethalCasinoTweaks.Logger.LogDebug("Failed to find card deck on start, using default position");
+        }
+    }
+
     /// Start CreateDeck Patches
 
     /**
@@ -70,6 +93,40 @@ public class BlackjackPatch
             __instance.CreateDeck();
         }
     }
+    
+    /**
+    * Here we adjust the local Y position of the deck so that it appears like a card was dealt.
+    * This is so that the height of the deck corresponds to the number of cards remaining.
+    */
+    [HarmonyPatch("DealCardClientRpc")]
+    [HarmonyPrefix]
+    private static void DealCardClientRpcPrefix(Blackjack __instance)
+    {
+        var cardDeck = GetCardDeckTransform(__instance);
+
+        if (cardDeck != null)
+        {
+            var localPos = cardDeck.localPosition;
+            float nextYPos;
+
+            if (__instance.deck == null)
+            {
+                LethalCasinoTweaks.Logger.LogDebug("Adjusting CardDeck transform: deck is null on this client");
+                nextYPos = FInitialDeckLocalYPos;
+            }
+            else
+            {
+                LethalCasinoTweaks.Logger.LogDebug($"Adjusting CardDeck transform: {__instance.deck.Count}");
+                nextYPos = FEmptyDeckLocalYPos + (__instance.deck.Count * FDeckCardYOffset);
+            }
+
+            cardDeck.localPosition = new Vector3(localPos.x, nextYPos, localPos.z);
+        }
+        else
+        {
+            LethalCasinoTweaks.Logger.LogWarning("Failed to find CardDeck transform");                
+        }
+    }
 
     /// End DealCard Patches
     
@@ -82,5 +139,13 @@ public class BlackjackPatch
     private static bool ShouldCreateDeck(Blackjack instance)
     {
         return instance.deck == null || instance.deck.Count == 0;
+    }
+    
+    /**
+     * Retrieve the CardDeck transform from within the Blackjack prefab instance
+     */
+    private static Transform? GetCardDeckTransform(Blackjack instance)
+    {
+        return instance.transform.Find("CardDeck");
     }
 }
