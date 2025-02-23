@@ -1,7 +1,8 @@
+using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using LethalCasino.Custom;
 using UnityEngine;
-using UnityEngine.UIElements.Collections;
 
 namespace LethalCasinoTweaks.Patches;
 
@@ -13,6 +14,14 @@ public class BlackjackPatch
     public static float FInitialDeckLocalYPos = .9462f;
     public static float FEmptyDeckLocalYPos = FInitialDeckLocalYPos - (FDeckCardYOffset * FullDeckSize);
 
+    public static List<Card>? InstanceCardsInPlay = null;
+
+    /**
+     * When an instance of the prefab is loaded, we store some initial values for later use. 
+     *
+     * This implicitly requires the prefab to be a singleton, else we can get conflicting
+     * values if they are instanced in multiple places on the same map.
+     */
     [HarmonyPatch("Start")]
     [HarmonyPostfix]
     private static void StartPostfix(Blackjack __instance)
@@ -28,6 +37,50 @@ public class BlackjackPatch
             LethalCasinoTweaks.Logger.LogDebug("Failed to find card deck on start, using default position");
         }
     }
+    
+    /// Start ShuffleDeck Patches
+
+    /**
+     * Here we patch `ShuffleDeck` so that, before it actually applies the shuffle,
+     * we filter out any cards currently in play.
+     *
+     * We can't use a `ref` param because of `IEnumerable` shenanigans, so we make a copy
+     * and use methods to mutate `ts` in place.
+     */
+    [HarmonyPatch("ShuffleDeck")]
+    [HarmonyPrefix]
+    public static void ShuffleDeckPrefix(List<Card> ts)
+    {
+        if (InstanceCardsInPlay == null)
+        {
+            LethalCasinoTweaks.Logger.LogDebug("Skipping shuffle deck behavior, InstanceCardsInPlay is null");
+            return;
+        }
+        
+        LethalCasinoTweaks.Logger.LogDebug($"Dropping {InstanceCardsInPlay.Count} in-play cards from new deck");
+
+        var cardsToIncludeInShuffle = new List<Card>();
+
+        // we modify both lists in this loop so that if we support multiple decks in the future
+        // then we only need to modify `CreateDeckPrefix`
+        foreach (var card in ts)
+        {
+            var inPlayIdx = InstanceCardsInPlay.FindIndex(x => x.suit == card.suit && x.face == card.face);
+            if (inPlayIdx != -1)
+            {
+                InstanceCardsInPlay.RemoveAt(inPlayIdx);
+            }
+            else
+            {
+                cardsToIncludeInShuffle.Add(card);
+            }
+        }
+
+        ts.Clear();
+        ts.AddRange(cardsToIncludeInShuffle);
+    }
+    
+    /// End ShuffleDeck Patches
 
     /// Start CreateDeck Patches
 
@@ -49,8 +102,11 @@ public class BlackjackPatch
             return false;
         }
 
-        LethalCasinoTweaks.Logger.LogDebug("Creating/shuffling deck");
+        LethalCasinoTweaks.Logger.LogDebug("Storing cards in play before creating/shuffling deck");
         __state = true;
+
+        InstanceCardsInPlay = __instance.playerCards.SelectMany(c => c).ToList();
+
         return true;
     }
     
@@ -71,6 +127,8 @@ public class BlackjackPatch
         {
             LethalCasinoTweaks.Logger.LogDebug("Didn't create a deck, skipping shuffle sound");
         }
+
+        InstanceCardsInPlay = null; // clear out the state used by the shuffler
     }
     
     /// End CreateDeck Patches
