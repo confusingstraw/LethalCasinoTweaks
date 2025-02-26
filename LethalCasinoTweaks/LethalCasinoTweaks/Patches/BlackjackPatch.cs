@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using LethalCasino.Custom;
+using LethalCasinoTweaks.Components;
 using UnityEngine;
 
 namespace LethalCasinoTweaks.Patches;
@@ -118,10 +119,17 @@ public class BlackjackPatch
     [HarmonyPostfix]
     private static void CreateDeckPostfix(Blackjack __instance, bool __state)
     {
+        var bridge = __instance.GetComponentInParent<BlackjackGameStateRpcBridge>();
+        if (bridge == null)
+        {
+            LethalCasinoTweaks.Logger.LogDebug("Failed to find RPC bridge");
+            return;
+        }
+
         if (__state)
         {
             LethalCasinoTweaks.Logger.LogDebug("Playing shuffle sound for all clients");
-            __instance.PlaySoundClientRpc("ShuffleDeck", 1f);   
+            bridge.OnShuffleClientRpc();
         }
         else
         {
@@ -153,37 +161,19 @@ public class BlackjackPatch
     }
     
     /**
-    * Here we adjust the local Y position of the deck so that it appears like a card was dealt.
-    * This is so that the height of the deck corresponds to the number of cards remaining.
-    */
-    [HarmonyPatch("DealCardClientRpc")]
-    [HarmonyPrefix]
-    private static void DealCardClientRpcPrefix(Blackjack __instance)
+     * Notify clients when a card is dealt so that their deck position can reflect it.
+     */
+    [HarmonyPatch("DealCard")]
+    [HarmonyPostfix]
+    private static void DealCardPostfix(Blackjack __instance)
     {
-        var cardDeck = GetCardDeckTransform(__instance);
-
-        if (cardDeck != null)
+        var bridge = __instance.GetComponentInParent<BlackjackGameStateRpcBridge>();
+        if (bridge == null)
         {
-            var localPos = cardDeck.localPosition;
-            float nextYPos;
-
-            if (__instance.deck == null)
-            {
-                LethalCasinoTweaks.Logger.LogDebug("Adjusting CardDeck transform: deck is null on this client");
-                nextYPos = FInitialDeckLocalYPos;
-            }
-            else
-            {
-                LethalCasinoTweaks.Logger.LogDebug($"Adjusting CardDeck transform: {__instance.deck.Count}");
-                nextYPos = FEmptyDeckLocalYPos + (__instance.deck.Count * FDeckCardYOffset);
-            }
-
-            cardDeck.localPosition = new Vector3(localPos.x, nextYPos, localPos.z);
+            LethalCasinoTweaks.Logger.LogDebug("Failed to find RPC bridge");
+            return;
         }
-        else
-        {
-            LethalCasinoTweaks.Logger.LogWarning("Failed to find CardDeck transform");                
-        }
+        bridge.UpdateDeckCountClientRpc(__instance.deck.Count);
     }
 
     /// End DealCard Patches

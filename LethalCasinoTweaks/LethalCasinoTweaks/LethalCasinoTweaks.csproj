@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
     <!-- BepInEx Properties -->
     <PropertyGroup>
         <AssemblyName>confusingus.LethalCasinoTweaks</AssemblyName>
@@ -49,6 +48,7 @@
         <PackageReference Include="UnityEngine.Modules" Version="2022.3.9" IncludeAssets="compile" PrivateAssets="all"/>
         <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all" />
         <Reference Include="Assembly-CSharp" HintPath="...\Assembly-CSharp.dll" Publicize="true" />
+        <Reference Include="Assembly-CSharp" HintPath="...\Unity.Netcode.Runtime.dll" Publicize="true" />
         <PackageReference Include="TeamBMX.LobbyCompatibility" Version="1.*" PrivateAssets="all"/>
         <Reference Include="mrgrm7.LethalCasino" Publicize="true">
           <HintPath>Vendor\mrgrm7.LethalCasino.dll</HintPath>
@@ -58,4 +58,8 @@
     <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all"/>
     </ItemGroup>
+
+    <Target Name="NetcodePatch" AfterTargets="PostBuildEvent">
+        <Exec Command="netcode-patch -nv 1.5.2 &quot;$(TargetPath)&quot; @(ReferencePathWithRefAssemblies->'&quot;%(Identity)&quot;', ' ')"/>
+    </Target>
 </Project>

@@ -1,8 +1,7 @@
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
-using System.Reflection;
-using UnityEngine;
+using LethalCasinoTweaks.Components;
 using LobbyCompatibility.Attributes;
 using LobbyCompatibility.Enums;
 
@@ -24,6 +23,7 @@ public class LethalCasinoTweaks : BaseUnityPlugin
         Instance = this;
 
         Patch();
+        AttachNetworkBridgeToPrefab();
 
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
     }
@@ -46,5 +46,14 @@ public class LethalCasinoTweaks : BaseUnityPlugin
         Harmony?.UnpatchSelf();
 
         Logger.LogDebug("Finished unpatching!");
+    }
+
+    /**
+     * Extend the Blackjack prefab so that our network bridge can send messages to clients.
+     */
+    internal static void AttachNetworkBridgeToPrefab()
+    {
+        var blackjackPrefab = LethalCasino.Plugin.Prefabs["Blackjack"];
+        blackjackPrefab.AddComponent<BlackjackGameStateRpcBridge>();
     }
 }
