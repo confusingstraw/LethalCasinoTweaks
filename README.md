@@ -1,6 +1,20 @@
-# Lethal Company Mod Template
+# LethalCompanyTweaks
 
-Thank you for using the mod template! Here are a few tips to help you on your journey:
+This project has been bootstrapped from the [Lethal Company Mod Template](https://github.com/Distractic/LethalCompanyTemplate).
+
+The project can be built by most modern IDEs, I prefer [Rider](https://www.jetbrains.com/rider/). The project contains a vendored version of the LethalCasino mod, this is only used so that we can ensure proper API usage.
+
+There are two main classes that apply different tweaks, both live under `Patches`:
+1. `BlackjackPatch`
+2. `BlackjackStartGameClientRpcPatch`
+
+The first, `BlackjackPatch`, contains the first features added to the mod. This class ensures that the deck only reshuffles when necessary, instead of after every hand like in the base mod.
+It also makes some minor RPC tweaks to ensure the shuffling sound plays across all clients.
+
+The `BlackjackGameStateRpcBridge` class supports `BlackjackPatch` by handling the actual sound playback (exposing a new RPC), as well as by adjusting the visual "size" of the deck based on the remaining card count.
+
+The latter class, `BlackjackStartGameClientRpcPatch`, supports the first class by disabling the built-in shuffling sound. It does this by patching the compiled mod's bytecode and removing the instruction to play the sound.
+This allows us to manage playing the sound ourselves back in the `BlackjackPatch` class.
 
 ## Versioning
 
