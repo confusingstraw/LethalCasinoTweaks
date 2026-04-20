@@ -2,15 +2,11 @@ using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
 using LethalCasinoTweaks.Components;
-using LobbyCompatibility.Attributes;
-using LobbyCompatibility.Enums;
 
 namespace LethalCasinoTweaks;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
-[BepInDependency("BMX.LobbyCompatibility", BepInDependency.DependencyFlags.HardDependency)]
 [BepInDependency("mrgrm7.LethalCasino", BepInDependency.DependencyFlags.HardDependency)]
-[LobbyCompatibility(CompatibilityLevel.Everyone, VersionStrictness.None)]
 public class LethalCasinoTweaks : BaseUnityPlugin
 {
     public static LethalCasinoTweaks Instance { get; private set; } = null!;
