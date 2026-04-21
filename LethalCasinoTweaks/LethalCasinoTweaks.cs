@@ -1,7 +1,9 @@
+using System.Reflection;
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
 using LethalCasinoTweaks.Components;
+using UnityEngine;
 
 namespace LethalCasinoTweaks;
 

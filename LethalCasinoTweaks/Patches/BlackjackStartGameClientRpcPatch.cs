@@ -22,7 +22,7 @@ public static class BlackjackStartGameClientRpcPatch
 
     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
     {
-        LethalCasinoTweaks.Logger.LogDebug("Generating reverse patch code");
+        LethalCasinoTweaks.Logger.LogDebug("[StartGameClientRpc] Generating reverse patch code");
         var list = instructions.ToList();
         
         var startIndex = -1;
@@ -52,12 +52,12 @@ public static class BlackjackStartGameClientRpcPatch
             
         if (startIndex > -1 && endIndex > -1)
         {
-            LethalCasinoTweaks.Logger.LogDebug($"Found instructions to patch, removing: [{startIndex}, {endIndex}]");
+            LethalCasinoTweaks.Logger.LogDebug($"[StartGameClientRpc] Found instructions to patch, removing: [{startIndex}, {endIndex}]");
             list.RemoveRange(startIndex, (endIndex - startIndex) + 1);
         }
         else
         {
-            LethalCasinoTweaks.Logger.LogWarning($"Failed to find audioSource call to patch: [{startIndex}, {endIndex}]");
+            LethalCasinoTweaks.Logger.LogWarning($"[StartGameClientRpc] Failed to find audioSource call to patch: [{startIndex}, {endIndex}]");
         }
             
         return list.AsEnumerable();
