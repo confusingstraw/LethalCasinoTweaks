@@ -11,7 +11,7 @@ using Unity.Netcode;
 namespace LethalCasinoTweaks.Patches;
 
 /**
- * Patches the `JoinGameServerRpc` method so that we can allow mid-game bets (doubling down).
+ * Patches the `JoinGameServerRpc` method so that we can allow mid-game bets (supports doubling down).
  */
 [HarmonyPatch(typeof(Blackjack), "JoinGameServerRpc")]
 public class BlackjackJoinGameServerRpcPatch
@@ -28,8 +28,15 @@ public class BlackjackJoinGameServerRpcPatch
     private static readonly MethodInfo MServerSuccessfullyPlacedBet =
         AccessTools.Method(typeof(BlackjackExtensions), "ServerSuccessfullyPlacedBet");
 
-    public static int? LAST_ORIGINAL_PLAYER_IDX = null;
+    public static int? LastOriginalPlayerIdx = null;
 
+    /**
+     * Modifies `JoinGameServerRpc` so the `gameInProgress` field check instead become a call to our
+     * `IsUnableToPlaceBet` extension method, where we wire in some double down logic.
+     *
+     * It also adds a call to our `ServerSuccessfullyPlacedBet` extension method at the end of the function,
+     * when we know a bet was allowed.
+     */
     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
     {
         LethalCasinoTweaks.Logger.LogDebug("[JoinGameServerRpc] Generating reverse patch code");
@@ -76,27 +83,29 @@ public class BlackjackJoinGameServerRpcPatch
     }
 
     /**
-     * Track the original offset playerIdx in state.
+     * Track the original offset playerIdx in state, then adjust the parameter to the "real" value
+     * so that `JoinGameServerRpc` can run normally.
      */
     [HarmonyPrefix]
     private static void JoinGameServerRpcPrefix(out int __state, Blackjack __instance, NetworkBehaviourReference playerRef, ref int playerIdx)
     {
+        // we track the RPC state so that we only run our logic when the code is executing as the server
         __state = (int)FRpcExecStage.GetValue(__instance);
         if (!__instance.IsServer || __state != 1) return;
 
         LethalCasinoTweaks.Logger.LogWarning($"[JoinGameServerRpc] Triggering prefix: {playerIdx}");
         
-        LAST_ORIGINAL_PLAYER_IDX = playerIdx;
+        LastOriginalPlayerIdx = playerIdx;
 
         if (playerIdx < 0)
         {
-            playerIdx += BlackjackDoubleDownFeature.MAGIC_PLAYER_INDEX_OFFSET;
-            LethalCasinoTweaks.Logger.LogWarning($"[JoinGameServerRpc] Changed index from {LAST_ORIGINAL_PLAYER_IDX} to {playerIdx}");
+            playerIdx += BlackjackDoubleDownFeature.MagicPlayerIndexOffset;
+            LethalCasinoTweaks.Logger.LogWarning($"[JoinGameServerRpc] Changed index from {LastOriginalPlayerIdx} to {playerIdx}");
         }
     }
     
     /**
-     * Track the original offset playerIdx in state.
+     * Unset the tracked value.
      */
     [HarmonyPostfix]
     private static void JoinGameServerRpcPostfix(int __state, Blackjack __instance, NetworkBehaviourReference playerRef, int playerIdx)
@@ -104,6 +113,6 @@ public class BlackjackJoinGameServerRpcPatch
         if (!__instance.IsServer || __state != 1) return;
 
         LethalCasinoTweaks.Logger.LogWarning($"[JoinGameServerRpc] Triggering postfix {playerIdx}");
-        LAST_ORIGINAL_PLAYER_IDX = null;
+        LastOriginalPlayerIdx = null;
     }
 }

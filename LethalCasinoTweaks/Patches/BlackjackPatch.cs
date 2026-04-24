@@ -204,7 +204,7 @@ public class BlackjackPatch
     /// Start Update Patches
     
     /**
-     * Ensure we reset the double down state when the game finishes.
+     * Give the double down feature a chance to check for keybind/other state.
      */
     [HarmonyPatch("Update")]
     [HarmonyPrefix]

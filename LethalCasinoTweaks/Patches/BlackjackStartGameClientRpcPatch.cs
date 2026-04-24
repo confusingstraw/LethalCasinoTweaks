@@ -49,7 +49,7 @@ public static class BlackjackStartGameClientRpcPatch
                 }
             }
         }
-            
+
         if (startIndex > -1 && endIndex > -1)
         {
             LethalCasinoTweaks.Logger.LogDebug($"[StartGameClientRpc] Found instructions to patch, removing: [{startIndex}, {endIndex}]");

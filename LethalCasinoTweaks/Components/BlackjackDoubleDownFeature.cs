@@ -10,12 +10,15 @@ namespace LethalCasinoTweaks.Components;
 
 public class BlackjackDoubleDownFeature : NetworkBehaviour
 {
-    public static readonly int MAGIC_PLAYER_INDEX_OFFSET = 1000;
+    public static readonly int MagicPlayerIndexOffset = 1000;
 
     private static readonly Regex PlayerHandPositionRegex = new("^Player([1-4])HandPosition$", RegexOptions.Compiled);
 
     private bool[] _doubleDownState = new bool[4];
 
+    /**
+     * Runs on `Update` of the Blackjack instance
+     */
     public void ApplyFeature()
     {
         try {
@@ -54,12 +57,6 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
         } catch (Exception e) {
             LethalCasinoTweaks.Logger.LogError($"[BlackjackDoubleDownFeature] Error applying double down feature: {e}");
         }
-    }
-
-    private bool IsMatchingMagicPlayerIndex(int playerIdx)
-    {
-        var lastPlayerIdx = BlackjackJoinGameServerRpcPatch.LAST_ORIGINAL_PLAYER_IDX;
-        return lastPlayerIdx != null && (lastPlayerIdx == (playerIdx - MAGIC_PLAYER_INDEX_OFFSET));
     }
 
     public bool ShouldAllowGameInProgressBet(PlayerControllerB playerController, int playerIdx)
@@ -108,7 +105,7 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
         instance.TakeTurnAsPlayerServerRpc(playerRef, playerIdx, "stand");
         instance.ShowWarningMessageClientRpc(playerRef, "You doubled down!", "", isWarning: false);
     }
-    
+
     private void SetHasPlayerDoubledDown(int playerIdx, bool hasDoubledDown)
     {
         if (playerIdx is < 0 or > 3)
@@ -172,7 +169,17 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
         }
 
         LethalCasinoTweaks.Logger.LogDebug("[BlackjackDoubleDownFeature] Submitting double down wager");
-        instance.JoinGameServerRpc(new NetworkBehaviourReference(playerController), playerIdx - MAGIC_PLAYER_INDEX_OFFSET);
+        instance.JoinGameServerRpc(new NetworkBehaviourReference(playerController), playerIdx - MagicPlayerIndexOffset);
+    }
+    
+    /**
+     * Checks whether the playerIdx matches an ongoing "double down" request. This is signaled
+     * by the `LastOriginalPlayerIdx` being set to `playerIdx - MagicPlayerIndexOffset`.
+     */
+    private static bool IsMatchingMagicPlayerIndex(int playerIdx)
+    {
+        var lastPlayerIdx = BlackjackJoinGameServerRpcPatch.LastOriginalPlayerIdx;
+        return lastPlayerIdx != null && (lastPlayerIdx == (playerIdx - MagicPlayerIndexOffset));
     }
 
     private static int GetLocalPlayerIndex(Blackjack instance, PlayerControllerB localPlayerController)
@@ -197,7 +204,7 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
 
         return -1;
     }
-    
+
     private static bool IsHoveringBetControls(Blackjack instance, PlayerControllerB localPlayerController)
     {
         if (!localPlayerController || !localPlayerController.hoveringOverTrigger)
@@ -207,6 +214,6 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
         
         var trigger = localPlayerController.hoveringOverTrigger.gameObject;
 
-        return trigger.name.Contains("Hit") || trigger.name.Contains("Stand");
+        return trigger.name.Contains("Hit");
     }
 }

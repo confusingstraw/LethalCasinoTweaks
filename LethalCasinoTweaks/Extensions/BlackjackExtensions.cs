@@ -28,7 +28,8 @@ public static class BlackjackExtensions
     }
 
     /**
-     * Utility method wrap `gameInProgress` checks with double down logic.
+     * Utility method wrap that replaces the `gameInProgress` check in `JoinGameServerRpc` with logic
+     * for allowing mid-game bets.
      */
     public static bool IsUnableToPlaceBet(this Blackjack instance, NetworkBehaviourReference playerRef, int playerIdx)
     {
@@ -39,6 +40,7 @@ public static class BlackjackExtensions
             return instance.gameInProgress;
         }
 
+        // if the game is in progress and the double down feature is available, let it decide if we can place a bet
         if (instance.gameInProgress)
         {
             var doubleDownFeature = instance.GetComponentInParent<BlackjackDoubleDownFeature>();
@@ -48,6 +50,9 @@ public static class BlackjackExtensions
         return instance.gameInProgress;
     }
 
+    /**
+     * Method for notifying the double down feature when a bet was successfully placed.
+     */
     public static void ServerSuccessfullyPlacedBet(this Blackjack instance, NetworkBehaviourReference playerRef, int playerIdx)
     {
         LethalCasinoTweaks.Logger.LogDebug("[BlackjackExtensions] Calling ServerSuccessfullyPlacedBet");
