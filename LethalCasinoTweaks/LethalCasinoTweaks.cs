@@ -1,5 +1,4 @@
 using System;
-using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -10,7 +9,7 @@ using UnityEngine;
 namespace LethalCasinoTweaks;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
-[BepInDependency("mrgrm7.LethalCasino", BepInDependency.DependencyFlags.HardDependency)]
+[BepInDependency("mrgrm7.LethalCasino")]
 public class LethalCasinoTweaks : BaseUnityPlugin
 {
     public static LethalCasinoTweaks Instance { get; private set; } = null!;
