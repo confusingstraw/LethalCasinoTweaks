@@ -50,7 +50,7 @@ public static class BlackjackExtensions
 
     public static void ServerSuccessfullyPlacedBet(this Blackjack instance, NetworkBehaviourReference playerRef, int playerIdx)
     {
-        LethalCasinoTweaks.Logger.LogInfo("[BlackjackExtensions] Calling ServerSuccessfullyPlacedBet");
+        LethalCasinoTweaks.Logger.LogDebug("[BlackjackExtensions] Calling ServerSuccessfullyPlacedBet");
         var doubleDownFeature = instance.GetComponentInParent<BlackjackDoubleDownFeature>();
         if (doubleDownFeature)
         {

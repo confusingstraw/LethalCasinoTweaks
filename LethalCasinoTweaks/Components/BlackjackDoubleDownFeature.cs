@@ -59,13 +59,12 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
     private bool IsMatchingMagicPlayerIndex(int playerIdx)
     {
         var lastPlayerIdx = BlackjackJoinGameServerRpcPatch.LAST_ORIGINAL_PLAYER_IDX;
-        LethalCasinoTweaks.Logger.LogInfo($"[BlackjackDoubleDownFeature] Indices: {lastPlayerIdx} | {playerIdx}");
         return lastPlayerIdx != null && (lastPlayerIdx == (playerIdx - MAGIC_PLAYER_INDEX_OFFSET));
     }
 
     public bool ShouldAllowGameInProgressBet(PlayerControllerB playerController, int playerIdx)
     {
-        LethalCasinoTweaks.Logger.LogInfo("[BlackjackDoubleDownFeature] Calling ShouldAllowGameInProgressBet");
+        LethalCasinoTweaks.Logger.LogDebug("[BlackjackDoubleDownFeature] Calling ShouldAllowGameInProgressBet");
 
         if (IsMatchingMagicPlayerIndex(playerIdx) && !HasPlayerDoubledDown(playerIdx))
         {
@@ -99,7 +98,7 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
 
         if (!IsMatchingMagicPlayerIndex(playerIdx))
         {
-            LethalCasinoTweaks.Logger.LogInfo($"[BlackjackDoubleDownFeature] Skipping postdoubledown");
+            LethalCasinoTweaks.Logger.LogWarning($"[BlackjackDoubleDownFeature] Skipping non-double down success");
             return;
         }
 
@@ -123,7 +122,7 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
     [ServerRpc]
     private void DoubleDownServerRpc(NetworkBehaviourReference playerRef, int playerIdx)
     {
-        LethalCasinoTweaks.Logger.LogInfo("[BlackjackDoubleDownFeature] Calling DoubleDownServerRpc");
+        LethalCasinoTweaks.Logger.LogDebug("[BlackjackDoubleDownFeature] Calling DoubleDownServerRpc");
 
         var instance = GetComponentInParent<Blackjack>();
         if (instance == null)
@@ -172,7 +171,7 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
             return;
         }
 
-        LethalCasinoTweaks.Logger.LogInfo("[BlackjackDoubleDownFeature] Submitting double down wager");
+        LethalCasinoTweaks.Logger.LogDebug("[BlackjackDoubleDownFeature] Submitting double down wager");
         instance.JoinGameServerRpc(new NetworkBehaviourReference(playerController), playerIdx - MAGIC_PLAYER_INDEX_OFFSET);
     }
 
