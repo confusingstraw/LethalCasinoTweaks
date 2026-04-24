@@ -1,6 +1,8 @@
 using System.Linq;
 using GameNetcodeStuff;
 using LethalCasino.Custom;
+using LethalCasinoTweaks.Components;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace LethalCasinoTweaks.Extensions;
@@ -21,50 +23,38 @@ public static class BlackjackExtensions
         }
         else
         {
-            LethalCasinoTweaks.Logger.LogWarning("Failed to find CardDeck transform");                
+            LethalCasinoTweaks.Logger.LogWarning("[BlackjackExtensions] Failed to find CardDeck transform");                
         }
-    }
-
-    /**
-     * Implements double down logic
-     */
-    public static bool CanDoubleDown(this Blackjack instance, PlayerControllerB playerController, int playerIdx)
-    {
-        LethalCasinoTweaks.Logger.LogDebug("Calling CanDoubleDown");
-        
-        var heldItem = playerController.ItemSlots[playerController.currentItemSlot];
-        if (!heldItem)
-        {
-            return false;
-        }
-
-        var scrapToBet = heldItem.GetComponent<CustomScrapController>();
-        if (!scrapToBet)
-        {
-            return false;
-        }
-
-        var currentHand = instance.playerCards[playerIdx];
-        var currentBet = instance.gambledScrap[playerIdx]
-            .Sum(scrap => scrap.GetComponent<CustomScrapController>()?.originalScrapValue ?? 0);
-
-        return currentHand.Count != 2 || scrapToBet.originalScrapValue > currentBet;
     }
 
     /**
      * Utility method wrap `gameInProgress` checks with double down logic.
-     *
-     * TODO: implement statefulness around tracking existing double-downs
      */
-    public static bool IsUnableToPlaceBet(this Blackjack instance, PlayerControllerB playerController, int playerIdx)
+    public static bool IsUnableToPlaceBet(this Blackjack instance, NetworkBehaviourReference playerRef, int playerIdx)
     {
-        LethalCasinoTweaks.Logger.LogDebug("Calling CanAttemptToPlaceBet");
+        LethalCasinoTweaks.Logger.LogDebug("[BlackjackExtensions] Calling CanAttemptToPlaceBet");
+        if (!playerRef.TryGet<PlayerControllerB>(out var playerController))
+        {
+            LethalCasinoTweaks.Logger.LogWarning("[BlackjackExtensions] Failed to extract player controller");
+            return instance.gameInProgress;
+        }
 
         if (instance.gameInProgress)
         {
-            return !instance.CanDoubleDown(playerController, playerIdx);
+            var doubleDownFeature = instance.GetComponentInParent<BlackjackDoubleDownFeature>();
+            return !doubleDownFeature.ShouldAllowGameInProgressBet(playerController, playerIdx);
         }
 
         return instance.gameInProgress;
+    }
+
+    public static void ServerSuccessfullyPlacedBet(this Blackjack instance, NetworkBehaviourReference playerRef, int playerIdx)
+    {
+        LethalCasinoTweaks.Logger.LogInfo("[BlackjackExtensions] Calling ServerSuccessfullyPlacedBet");
+        var doubleDownFeature = instance.GetComponentInParent<BlackjackDoubleDownFeature>();
+        if (doubleDownFeature)
+        {
+            doubleDownFeature.ServerPostDoubleDownSuccess(instance, playerRef, playerIdx);
+        }
     }
 }

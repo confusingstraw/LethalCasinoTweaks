@@ -1,12 +1,34 @@
+using System.Reflection;
 using LethalCasino.Custom;
 using LethalCasinoTweaks.Extensions;
 using LethalCasinoTweaks.Patches;
 using Unity.Netcode;
+using UnityEngine;
 
 namespace LethalCasinoTweaks.Components;
 
-public class BlackjackGameStateRpcBridge : BlackjackComponent
+public class BlackjackGameStateRpcBridge : NetworkBehaviour
 {
+    /**
+     * Attach networking behaviors from netcode patcher.
+     */
+    private void Awake()
+    {
+        var types = Assembly.GetExecutingAssembly().GetTypes();
+        foreach (var type in types)
+        {
+            var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+            foreach (var method in methods)
+            {
+                var attributes = method.GetCustomAttributes(typeof(RuntimeInitializeOnLoadMethodAttribute), false);
+                if (attributes.Length > 0)
+                {
+                    method.Invoke(null, null);
+                }
+            }
+        }
+    }
+
     /**
      * When the count of cards in the deck changes, update the deck position
      */
