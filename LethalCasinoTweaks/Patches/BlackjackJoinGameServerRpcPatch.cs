@@ -92,14 +92,11 @@ public class BlackjackJoinGameServerRpcPatch
         __state = (int)FRpcExecStage.GetValue(__instance);
         if (!__instance.IsServer || __state != 1) return;
 
-        LethalCasinoTweaks.Logger.LogWarning($"[JoinGameServerRpc] Triggering prefix: {playerIdx}");
-        
         LastOriginalPlayerIdx = playerIdx;
 
         if (playerIdx < 0)
         {
             playerIdx += BlackjackDoubleDownFeature.MagicPlayerIndexOffset;
-            LethalCasinoTweaks.Logger.LogWarning($"[JoinGameServerRpc] Changed index from {LastOriginalPlayerIdx} to {playerIdx}");
         }
     }
     
@@ -111,7 +108,6 @@ public class BlackjackJoinGameServerRpcPatch
     {
         if (!__instance.IsServer || __state != 1) return;
 
-        LethalCasinoTweaks.Logger.LogWarning($"[JoinGameServerRpc] Triggering postfix {playerIdx}");
         LastOriginalPlayerIdx = null;
     }
 }

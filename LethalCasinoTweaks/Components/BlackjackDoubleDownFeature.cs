@@ -19,16 +19,15 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
 
     private void Awake()
     {
-        LethalCasinoTweaks.Logger.LogWarning("[BlackjackDoubleDownFeature] Awake");
+        LethalCasinoTweaks.Logger.LogDebug("[BlackjackDoubleDownFeature] Awake");
 
         if (LethalCasinoTweaks.InputActions?.DoubleDownKey != null)
         {
             LethalCasinoTweaks.InputActions.DoubleDownKey.performed += OnActivateDoubleDown;
-            LethalCasinoTweaks.Logger.LogWarning("[BlackjackDoubleDownFeature] keybind callback ready");
         }
         else
         {
-            LethalCasinoTweaks.Logger.LogWarning("[BlackjackDoubleDownFeature] keybind callback null");
+            LethalCasinoTweaks.Logger.LogWarning("[BlackjackDoubleDownFeature] DoubleDown input action not ready");
         }
 
         UpdateKeyBindTooltipHint();
@@ -51,7 +50,7 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
         }
         else
         {
-            LethalCasinoTweaks.Logger.LogWarning("[BlackjackDoubleDownFeature] failed to find hitprefab trigger");
+            LethalCasinoTweaks.Logger.LogWarning("[BlackjackDoubleDownFeature] Failed to find hit prefab trigger");
         }
     }
 
@@ -130,11 +129,11 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
      */
     public void ServerPostDoubleDownSuccess(Blackjack instance, NetworkBehaviourReference playerRef, int playerIdx)
     {
-        LethalCasinoTweaks.Logger.LogWarning("[JoinGameSuccessfulClientRpcPatch] Calling ServerPostDoubleDownSuccess");
+        LethalCasinoTweaks.Logger.LogDebug("[JoinGameSuccessfulClientRpcPatch] Calling ServerPostDoubleDownSuccess");
         
         if (!IsMatchingMagicPlayerIndex(playerIdx))
         {
-            LethalCasinoTweaks.Logger.LogWarning($"[BlackjackDoubleDownFeature] Skipping non-double down success");
+            LethalCasinoTweaks.Logger.LogDebug($"[BlackjackDoubleDownFeature] Skipping non-double down success");
             return;
         }
 
