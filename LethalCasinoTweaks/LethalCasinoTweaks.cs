@@ -1,29 +1,36 @@
-using System;
 using BepInEx;
-using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using LethalCasinoTweaks.Components;
-using UnityEngine;
+using LethalCompanyInputUtils.Api;
+using LethalCompanyInputUtils.BindingPathEnums;
+using UnityEngine.InputSystem;
 
 namespace LethalCasinoTweaks;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 [BepInDependency("mrgrm7.LethalCasino")]
+[BepInDependency("com.rune580.LethalCompanyInputUtils")]
 public class LethalCasinoTweaks : BaseUnityPlugin
 {
     public static LethalCasinoTweaks Instance { get; private set; } = null!;
     internal new static ManualLogSource Logger { get; private set; } = null!;
     internal static Harmony? Harmony { get; set; }
     
-    public static ConfigEntry<KeyboardShortcut>? DoubleDownKey { get; private set; }
+    public class LcCasinoTweaksInputActions : LcInputActions
+    {
+        [InputAction(KeyboardControl.U, Name = "Double Down")]
+        public InputAction? DoubleDownKey { get; set; }
+    }
+    
+    internal static LcCasinoTweaksInputActions? InputActions { get; private set; }
 
     private void Awake()
     {
         Logger = base.Logger;
         Instance = this;
+        InputActions = new LcCasinoTweaksInputActions();
 
-        DoubleDownKey = Config.Bind("Controls", "DoubleDownKey", new KeyboardShortcut(KeyCode.U, Array.Empty<KeyCode>()), "Key to perform Double Down action in Blackjack");
         Patch();
         AttachNetworkBridgeToPrefab();
         AttachDoubleDownFeature();

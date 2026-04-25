@@ -1,11 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
-using GameNetcodeStuff;
 using HarmonyLib;
 using LethalCasino.Custom;
 using LethalCasinoTweaks.Components;
-using Unity.Netcode;
 using UnityEngine;
 
 namespace LethalCasinoTweaks.Patches;
@@ -200,27 +197,6 @@ public class BlackjackPatch
     }
 
     /// End ResetGameState Patches
-
-    /// Start Update Patches
-    
-    /**
-     * Give the double down feature a chance to check for keybind/other state.
-     */
-    [HarmonyPatch("Update")]
-    [HarmonyPrefix]
-    private static void UpdatePrefix(Blackjack __instance)
-    {
-        var doubleDownFeature = __instance.GetComponentInParent<BlackjackDoubleDownFeature>();
-        if (doubleDownFeature == null)
-        {
-            LethalCasinoTweaks.Logger.LogWarning("Failed to find DoubleDownFeature");
-            return;
-        }
-
-        doubleDownFeature.ApplyFeature();
-    }
-
-    /// End Update Patches
 
     /// Utilities
 

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
@@ -28,7 +27,7 @@ public class BlackjackJoinGameServerRpcPatch
     private static readonly MethodInfo MServerSuccessfullyPlacedBet =
         AccessTools.Method(typeof(BlackjackExtensions), "ServerSuccessfullyPlacedBet");
 
-    public static int? LastOriginalPlayerIdx = null;
+    public static int? LastOriginalPlayerIdx;
 
     /**
      * Modifies `JoinGameServerRpc` so the `gameInProgress` field check instead become a call to our

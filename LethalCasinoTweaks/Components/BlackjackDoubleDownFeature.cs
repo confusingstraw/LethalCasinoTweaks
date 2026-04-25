@@ -2,12 +2,13 @@ using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using GameNetcodeStuff;
+using LethalCasino;
 using LethalCasino.Custom;
 using LethalCasinoTweaks.Patches;
 using Unity.Netcode;
+using UnityEngine.InputSystem;
 
 namespace LethalCasinoTweaks.Components;
-
 public class BlackjackDoubleDownFeature : NetworkBehaviour
 {
     public static readonly int MagicPlayerIndexOffset = 1000;
@@ -16,10 +17,48 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
 
     private bool[] _doubleDownState = new bool[4];
 
+    private void Awake()
+    {
+        LethalCasinoTweaks.Logger.LogWarning("[BlackjackDoubleDownFeature] Awake");
+
+        if (LethalCasinoTweaks.InputActions?.DoubleDownKey != null)
+        {
+            LethalCasinoTweaks.InputActions.DoubleDownKey.performed += OnActivateDoubleDown;
+            LethalCasinoTweaks.Logger.LogWarning("[BlackjackDoubleDownFeature] keybind callback ready");
+        }
+        else
+        {
+            LethalCasinoTweaks.Logger.LogWarning("[BlackjackDoubleDownFeature] keybind callback null");
+        }
+
+        UpdateKeyBindTooltipHint();
+    }
+
+    public void UpdateKeyBindTooltipHint()
+    {
+        var instance = GetComponentInParent<Blackjack>();
+        if (instance == null)
+        {
+            LethalCasinoTweaks.Logger.LogDebug(
+                "[BlackjackDoubleDownFeature] Failed to find blackjack sibling component");
+            return;
+        }
+
+        var trigger = GetHitPrefabTrigger();
+        if (trigger)
+        {
+            trigger!.hoverTip = FormatHoverTip();
+        }
+        else
+        {
+            LethalCasinoTweaks.Logger.LogWarning("[BlackjackDoubleDownFeature] failed to find hitprefab trigger");
+        }
+    }
+
     /**
-     * Runs on `Update` of the Blackjack instance
+     * Runs on key-press of the double down keybind
      */
-    public void ApplyFeature()
+    private void OnActivateDoubleDown(InputAction.CallbackContext ctx)
     {
         try {
             var localPlayerController = GameNetworkManager.Instance.localPlayerController;
@@ -50,7 +89,7 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
                 return;
             }
 
-            if (LethalCasinoTweaks.DoubleDownKey?.Value.IsDown() == true)
+            if (LethalCasinoTweaks.InputActions?.DoubleDownKey?.triggered == true)
             {
                 DoubleDownServerRpc(localPlayerController, playerIdx);
             }
@@ -92,7 +131,7 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
     public void ServerPostDoubleDownSuccess(Blackjack instance, NetworkBehaviourReference playerRef, int playerIdx)
     {
         LethalCasinoTweaks.Logger.LogWarning("[JoinGameSuccessfulClientRpcPatch] Calling ServerPostDoubleDownSuccess");
-
+        
         if (!IsMatchingMagicPlayerIndex(playerIdx))
         {
             LethalCasinoTweaks.Logger.LogWarning($"[BlackjackDoubleDownFeature] Skipping non-double down success");
@@ -215,5 +254,44 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
         var trigger = localPlayerController.hoveringOverTrigger.gameObject;
 
         return trigger.name.Contains("Hit");
+    }
+
+    private static InteractTrigger? GetHitPrefabTrigger()
+    {
+        var hitPrefab = Plugin.Prefabs["BlackjackBetControls"].transform.Find("Hit");
+        return hitPrefab ? hitPrefab.gameObject.GetComponent<InteractTrigger>() : null;
+    }
+
+    private static (InputAction?, InputAction?) GetInputActions()
+    {
+        var doubleDownBinding = LethalCasinoTweaks.InputActions?.DoubleDownKey;
+        var interactBinding = InputSystem.actions.FindAction("Interact");
+        return (interactBinding, doubleDownBinding);
+    }
+
+    /**
+     * Renders the double down keybind to a string and appends it to the default
+     * prefab string.
+     */
+    private static string FormatHoverTip()
+    {
+        var doubleDownBindingDisplayName = "Not Bound";
+        var interactBindingDisplayName = "Not Bound";
+        
+        var (interactAction, doubleDownAction) = GetInputActions();
+
+        var interactBinding = interactAction?.bindings.First();
+        if (interactBinding != null)
+        {
+            interactBindingDisplayName = interactBinding.Value.ToDisplayString();
+        }
+        
+        var doubleDownBinding = doubleDownAction?.bindings.First();
+        if (doubleDownBinding != null)
+        {
+            doubleDownBindingDisplayName = doubleDownBinding.Value.ToDisplayString();
+        }
+
+        return $"Hit : [{interactBindingDisplayName}]\nDouble Down : [{doubleDownBindingDisplayName}]";
     }
 }

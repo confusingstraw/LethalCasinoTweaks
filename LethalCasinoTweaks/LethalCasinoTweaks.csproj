@@ -49,6 +49,7 @@
         <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all" />
         <Reference Include="Assembly-CSharp" HintPath="...\Assembly-CSharp.dll" Publicize="true" />
         <Reference Include="Assembly-CSharp" HintPath="...\Unity.Netcode.Runtime.dll" Publicize="true" />
+        <PackageReference Include="Rune580.Mods.LethalCompany.InputUtils" Version="0.7.10" />
         <Reference Include="mrgrm7.LethalCasino" Publicize="true">
           <HintPath>Vendor\mrgrm7.LethalCasino.dll</HintPath>
         </Reference>
