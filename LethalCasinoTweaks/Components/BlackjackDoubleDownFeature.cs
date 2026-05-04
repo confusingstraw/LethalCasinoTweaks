@@ -154,7 +154,7 @@ public class BlackjackDoubleDownFeature : NetworkBehaviour
         _doubleDownState[playerIdx] = hasDoubledDown;
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     private void DoubleDownServerRpc(NetworkBehaviourReference playerRef, int playerIdx)
     {
         LethalCasinoTweaks.Logger.LogDebug("[BlackjackDoubleDownFeature] Calling DoubleDownServerRpc");
